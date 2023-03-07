@@ -3,7 +3,7 @@
 # Written by: tyak9569
 # Purpose: Hisat2-Index script for tyak9569
 
-#SBATCH --partition=shas     # Summit partition
+#SBATCH --partition=amilan     # Alpine partition
 #SBATCH --qos=normal                 # Summit qos
 #SBATCH --time=00:40:00           # Max wall time in HHH:MM:SS
 #SBATCH --ntasks=16           # Number of tasks per job
