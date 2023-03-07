@@ -17,9 +17,13 @@
 module purge
 
 # load the module needed to run the software container, and set up temporary directories
-module load singularity/3.3.0
-export SINGULARITY_TMPDIR=/scratch/summit/$USER
-export SINGULARITY_CACHEDIR=/scratch/summit/$USER
+module load singularity
+export SINGULARITY_TMPDIR=/gpfs/summit/scratch/$USER
+export SINGULARITY_CACHEDIR=/gpfs/summit/scratch/$USER
+outdirectory=/gpfs/summit/scratch/tyak9569/wbh/genome/index
+indirectory=/gpfs/summit/scratch/tyak9569/wbh/genome
+
+mkdir -p ${outdirectory}
 
 # Build Hisat2 Index
-singularity run /projects/lowryc/software/containers/rnaseq.sif hisat2-build -p 16 /projects/tyak9569/dnFGFR/genome/Mus_musculus.GRCm38.dna.primary_assembly.fa /projects/tyak9569/dnFGFR/genome/GRCm38
+singularity run /projects/lowryc/software/containers/rnaseq.sif hisat2-build -p 16 ${indirectory}/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna ${outdirectory}
