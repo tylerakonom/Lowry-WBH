@@ -4,7 +4,7 @@
 # Date: 20230223
 # Purpose: Cutadapt script for tyak9569
 
-#SBATCH --partition=shas    # Summit partition
+#SBATCH --partition=amilan    # Summit partition
 #SBATCH --qos=normal                 # Summit qos
 #SBATCH --time=001:00:00           # Max wall time in HHH:MM:SS
 #SBATCH --ntasks=6           # Number of tasks per job  
