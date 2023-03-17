@@ -27,10 +27,10 @@ export SINGULARITY_CACHEDIR=/gpfs/alpine1/scratch/$USER
 indirectory=/gpfs/alpine1/scratch/$USER/wbh
 outdirectory=/gpfs/alpine1/scratch/$USER/wbh/fastQC
 
-mkdir -p /alpine/scratch/$USER/wbh/fastQC
-mkdir -p /alpine/scratch/$USER/wbh/fastQC/rawdata
-mkdir -p /alpine/scratch/$USER/wbh/fastQC/trimmed
-mkdir -p /alpine/scratch/$USER/wbh/fastQC/aligned
+mkdir -p /scratch/alpine/$USER/wbh/fastQC
+mkdir -p /scratch/alpine/$USER/wbh/fastQC/rawdata
+mkdir -p /scratch/alpine/$USER/wbh/fastQC/trimmed
+mkdir -p /scratch/alpine/$USER/wbh/fastQC/aligned
 
 # Running Fastqc
 
