@@ -22,6 +22,6 @@ export SINGULARITY_TMPDIR=/gpfs/alpine1/scratch/$USER
 export SINGULARITY_CACHEDIR=/gpfs/alpine1/scratch/$USER
 indirectory=/gpfs/alpine1/scratch/tyak9569/wbh/rawdata
 outdirectory=/gpfs/alpine1/scratch/tyak9569/wbh/trimmedReads
-# mkdir -p $outdirectory
+# mkdir -p /scratch/alpine/$USER/trimmedReads
 
 singularity run /projects/lowryc/software/containers/rnaseq.sif cutadapt -j 6 -u 15 -U 15 -q 20 -m 20	-a GATCGGAAGAGCACACGTCTGAACTCCAGTCACGGATGACTATCTCGTATGCCGTCTTCTGCTTG -g AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTAGATCTCGGTGGTCGCCGTATCATT -o ${outdirectory}/${filename}_1_trimmed.fq.gz -p ${outdirectory}/${filename}_2_trimmed.fq.gz ${indirectory}/${filename}_1.fq.gz ${indirectory}/${filename}_2.fq.gz
