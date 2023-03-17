@@ -28,7 +28,7 @@ indirectory=/gpfs/alpine1/scratch/$USER/wbh
 outdirectory=/gpfs/alpine1/scratch/$USER/wbh/fastQC
 
 mkdir -p /scratch/alpine/$USER/wbh/fastQC
-mkdir -p /scratch/alpine/$USER/wbh/fastQC/rawdata
+mkdir -p /scratch/alpine/$USER/wbh/fastQC/raw
 mkdir -p /scratch/alpine/$USER/wbh/fastQC/trimmed
 mkdir -p /scratch/alpine/$USER/wbh/fastQC/aligned
 
