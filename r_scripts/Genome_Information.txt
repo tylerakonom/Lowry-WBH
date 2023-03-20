@@ -1,0 +1,5 @@
+Genome Information:
+
+Annotated (gif) downloaded on 3_20_23 at 1541 from:
+
+https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/genes/hg38.refGene.gtf.gz
