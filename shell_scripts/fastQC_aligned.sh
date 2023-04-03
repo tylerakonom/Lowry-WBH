@@ -46,7 +46,7 @@ outdirectory=/gpfs/alpine1/scratch/$USER/wbh/fastQC
 # for f in ${trimmed}
 # do
 # 	singularity run /projects/lowryc/software/containers/rnaseq.sif fastqc -t 32 -o ${outdirectory}/trimmed/ -d ${indirectory}/trimmedReads $f
-done
+# done
 
 # Aligned
 aligned=${indirectory}/aligned/*.bam
