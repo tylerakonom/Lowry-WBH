@@ -1,0 +1,129 @@
+---
+title: "wbh_deseq2"
+author: "Tyler Akonom"
+date: "4/5/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+require("knitr")
+knitr::opts_chunk$set(echo = TRUE)
+opts_knit$set(root.dir = "C:\\GitHub\\Lowry-WBH\\deseq_out\\")
+outdir <- "C:\\GitHub\\Lowry-WBH\\deseq_out\\"
+library(dplyr)
+library(DESeq2)
+library(knitr)
+library(ggplot2)
+library(magrittr)
+library(tidyr)
+library(tibble)
+library(ComplexHeatmap)
+#library(DEGreport)
+library(vsn)
+library(rrcov)
+library(sva)
+library(circlize)
+```
+
+
+# Load counts and metadata
+```{r}
+# Importing count and coldata files
+counts = read.csv("C:\\GitHub\\Lowry-WBH\\rsub_out\\rsub_id.coverage.csv", header=TRUE, row.names = 1)
+colnames(counts) <- sub(".bam", "", colnames(counts))
+coldata = read.table("C:\\GitHub\\Lowry-WBH\\rsub_out\\coldata.txt", header=TRUE, sep="\t")
+
+coldata$group<-paste(coldata$sex, coldata$exp_group, sep="_")
+coldata$exp_group <- factor(coldata$exp_group, levels = c("sham","treatment"))
+coldata$exp_group <- factor(coldata$exp_group)
+coldata$group <- factor(coldata$group)
+coldata$sex <- factor(coldata$sex)
+coldata$sequencing_run <- factor(coldata$sequencing_run)
+
+# sort coldata properly
+counts <- counts[,coldata$sample_name]
+
+threshold <- 0.1
+```
+
+
+# Using robust PCA to check for and remove outliers
+```{r}
+counts_t <- t(counts)
+pcah <- PcaHubert(counts_t)
+pcag <- PcaGrid(counts_t)
+plot(pcag)
+
+# Samples TF0014 and TF0023 were identified using PcaGrid as outliers. These were identified by FastQC previously as having lesser / differing quality from other samples.
+removed_samples <- c("TF0023", "TF0014")
+coldata_edited <- coldata %>% filter (!sample_name %in% removed_samples)
+counts_edited <- as.data.frame(counts) %>% select(coldata_edited$sample_name)
+```
+
+
+# Running DEG analysis to generate normalized counts and check for addtional drivers of expression that will need to be controlled for in the DESeq design
+```{r}
+dds = DESeqDataSetFromMatrix(countData = counts_edited, colData = coldata_edited, design = ~ exp_group)
+dds = DESeq(dds)
+plotDispEsts(dds)
+res <- results(dds)
+
+# Checking to see if the sex or sequencing_run variables drive expression
+ntdds <- normTransform(dds)
+plotPCA(ntdds, intgroup = "sex")
+plotPCA(ntdds, intgroup = "sequencing_run")
+# PCA identified sex as a variable that will need to be controlled for in DESeq design
+```
+
+
+# Running DEG analysis controlling for necessary variables
+```{r}
+# Using sfType because of general down regulation in response to heating.
+dds = DESeqDataSetFromMatrix(countData = counts_edited, colData = coldata_edited, design = ~ sex + exp_group)
+dds = DESeq(dds, sfType = "iterate")
+plotDispEsts(dds)
+res_treatment <- results(dds)
+
+normed <- counts(dds, normalized=TRUE)
+threshold = 0.01
+summary(res_treatment, alpha = threshold)
+plotMA(res_treatment, alpha = threshold)
+
+res[order(res_treatment$padj), ]
+plotCounts(dds, gene = "HBZ", intgroup = c("sex", "exp_group"))
+
+hist(res_treatment$pvalue, breaks = 200)
+hist(res_treatment$padj, breaks = 200)
+
+# # Write out results:
+# setwd("C:\\GitHub\\Lowry-WBH\\deseq_out\\")
+# write.csv(as.data.frame(res_treatment), file="res_treatment.csv")
+# 
+# # Create MA Plot, alpha is FDR cutoff, for this experiment it is "0.01"
+# pdf("res_treatment_MAPlot.pdf")
+# DESeq2::plotMA(res, alpha = 0.01, ylim=c(-3,3), cex=.4)
+# abline(h=c(-1,1), col="dodgerblue", lwd=2)
+# dev.off()
+# 
+# # Write out normalized counts
+# write.csv(normed, file="norm_counts.csv")
+# 
+# # Plot dispersions
+# pdf("res_treatment_disp.pdf")
+# plotDispEsts(dds)
+# dev.off()
+```
+
+# Generating ranked list for GSEA
+```{r}
+rnkdf <- tibble(gene = rownames(res_treatment),
+				rnk = -log(res_treatment$pvalue) * sign(res_treatment$log2FoldChange)) %>%
+	arrange(desc(rnk)) %>% drop_na()
+
+# Write out the table without any additional information
+write.table(rnkdf, file = paste0("C:\\GitHub\\Lowry-WBH\\gsea\\","wbh_treatment_res_for_gsea.rnk"),
+			append = FALSE, col.names = FALSE, row.names = FALSE,
+			quote = FALSE, sep = "\t")
+```
+
+
