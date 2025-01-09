@@ -1,7 +1,7 @@
 ---
 title: "wbh_deseq2"
 author: "Tyler Akonom"
-date: "4/5/2023"
+date: "1/8/2025"
 output: html_document
 ---
 
@@ -146,6 +146,7 @@ normedsig <- as.data.frame(normed) %>% filter(rownames(normed) %in% siggenes)
 rowSigma <- apply(normedsig, 1, sd, na.rm = TRUE)
 rowMu <- rowMeans(normedsig, na.rm = TRUE)
 zscore_norm_expression <- (normedsig - rowMu) / rowSigma
+write.csv(zscore_norm_expression, file="zscore.csv")
 
 col_fun = circlize::colorRamp2(c(-2, 0, 2), c("blue", "white", "red"))
 resSig <- as.data.frame(subset(res_treatment, padj < threshold))

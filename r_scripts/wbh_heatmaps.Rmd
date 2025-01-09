@@ -1,7 +1,7 @@
 ---
 title: "wbh_heatmaps"
 author: "Tyler Akonom"
-date: "1/1/2025"
+date: "1/8/2025"
 output: html_document
 ---
 
@@ -31,17 +31,17 @@ library(EnhancedVolcano)
 # --------- TO EDIT Generating heatmaps of significant GSEA results --------
 
 ```{r}
-setwd("C:\\GitHub\\dnFGFR\\deseq_outputs\\GSEA_results\\")
+setwd("C:\\GitHub\\Lowry-WBH\\deseq_out\\")
 
-pos <- read.csv("pos.csv", header = TRUE)
-neg <- read.csv("neg.csv", header = TRUE)
-norm <- read.csv("C:\\GitHub\\dnFGFR\\deseq_outputs\\effect_housing_dnFGFR_res\\normCounts.csv", row.names = 1)
-normd <- select(norm, contains("D"))
-normds <- select(normd, contains("S"))
-normdo <- select(normd, contains("O"))
+pos <- read.csv("gsea_pos.csv", header = TRUE)
+neg <- read.csv("gsea_neg.csv", header = TRUE)
+norm <- read.csv("C:\\GitHub\\Lowry-WBH\\deseq_out\\norm_counts.csv", row.names = 1)
+norm_m <- select(norm, contains("M"))
+norm_f <- select(norm, contains("F"))
+norm_s <- select(norm, contains("S"))
+norm_t <- select(norm, contains("T"))
 
-zscore <- read.csv("C:\\GitHub\\dnFGFR\\deseq_outputs\\zscore.csv", row.names = 1)
-zscoredn <- zscore %>% select(contains("D"))
+zscore <- read.csv("C:\\GitHub\\Lowry-WBH\\deseq_out\\zscore.csv", row.names = 1)
 
 posfwer <- filter(pos, FWER.p.val < 0.05)
 posbps <- paste(posfwer$NAME)
@@ -56,7 +56,7 @@ tsv <- c(postsv, negtsv)
 
 for(i in c(1:length(bps))){
      name <- bps[[i]]    
-     assign (name, read.csv(paste0("C:\\GitHub\\dnFGFR\\my_analysis.GseaPreranked.1667342500005\\", bps[i], ".tsv"), sep = "\t",
+     assign (name, read.csv(paste0("C:\\GitHub\\Lowry-WBH\\gsea\\C5_GOBP\\treatment_wbh.GseaPreranked.1680722207986\\", bps[i], ".tsv"), sep = "\t",
                             colClasses = c('character','character', 'numeric', 'numeric', 'numeric', 'factor', 'factor')
                             ))}
 
@@ -65,7 +65,7 @@ flist <- lapply(list, function(df){
   df <- df %>% select(SYMBOL, CORE.ENRICHMENT)
   df$CORE.ENRICHMENT <- factor(df$CORE.ENRICHMENT)
   df <- df %>% filter(CORE.ENRICHMENT == "Yes")
-  df <- as.data.frame(zscoredn) %>% filter(rownames(zscoredn) %in% df$SYMBOL)
+  df <- as.data.frame(zscore) %>% filter(rownames(zscore) %in% df$SYMBOL)
   df
 })
 ```
@@ -74,6 +74,7 @@ flist <- lapply(list, function(df){
 
 ```{r}
 data_list <- flist
+col_fun = circlize::colorRamp2(c(-2, 0, 2), c("blue", "white", "red"))
 
 # Function to generate heatmap for each data frame in the list
 
@@ -90,10 +91,10 @@ generate_heatmaps <- function(data_list) {
                               row_names_side = "left",
                               column_title_side = "top",
                               column_names_rot = 90,
-                              show_column_names = FALSE,
+                              show_column_names = TRUE,
                               show_row_dend = FALSE,
                               show_column_dend = FALSE,
-                              column_split = c("1-SS", "1-SS", "1-SS", "1-SS", "1-SS", "2-OS", "2-OS", "2-OS", "2-OS"),
+                              # column_split = c("1-SS", "1-SS", "1-SS", "1-SS", "1-SS", "2-OS", "2-OS", "2-OS", "2-OS"),
                               heatmap_width = unit(4, "npc"),
                               heatmap_height = unit(8, "npc"),
                               heatmap_legend_param = list(legend_height = unit(.5, "npc"), legend_width = unit(.2, "npc"), title_position = "topcenter")                             
@@ -111,6 +112,6 @@ generate_heatmaps <- function(data_list) {
 }
 
 # Call the function to generate heatmaps for each data frame
-setwd("C:\\GitHub\\dnFGFR\\deseq_outputs\\GSEA_results\\heatmaps\\")
+setwd("C:\\GitHub\\Lowry-WBH\\gsea\\heatmaps\\")
 generate_heatmaps(data_list)
 ```
