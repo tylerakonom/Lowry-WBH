@@ -1,0 +1,440 @@
+---
+title: "Depression Scores V Gene Expression"
+author: "Tyler Akonom"
+date: "5/24/2025"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+require("knitr")
+knitr::opts_chunk$set(echo = TRUE)
+opts_knit$set(root.dir = "C:\\GitHub\\Lowry-WBH\\deseq_out\\")
+outdir <- "C:\\GitHub\\Lowry-WBH\\deseq_out\\exploratory\\"
+library(dplyr)
+library(DESeq2)
+library(knitr)
+library(ggplot2)
+library(magrittr)
+library(tidyr)
+library(tibble)
+```
+
+
+
+# Inputting relevant data
+```{r}
+counts = read.csv("C:\\GitHub\\Lowry-WBH\\deseq_out\\norm_counts.csv", header=TRUE, row.names = 1)
+deg_results = read.csv("C:\\GitHub\\Lowry-WBH\\deseq_out\\exploratory\\res_treatment.csv", header=TRUE, row.names = 1)
+deg_results_sig <- deg_results %>% filter(padj < 0.01)
+siggenes <- c(rownames(deg_results_sig), "IL6")
+counts_sig <- counts %>% filter(rownames(counts) %in% siggenes)
+
+
+meta = read.csv("C:\\GitHub\\Lowry-WBH\\deseq_out\\exploratory\\samples.csv", header=TRUE, row.names = 1)
+meta <- meta[match(colnames(counts), meta$sample), ]
+```
+
+
+# Pearson correlation of change in IDS scores to gene expression
+```{r}
+#	We can conduct, at least in an exploratory fashion, Pearson correlation between normalized gene counts in each sample with change (from baseline) in HDRS score, and (separately) with change (from baseline) in IDS-SR score at the 1 week and (separately) 2 week time points, and (separately) with max temperature during WBH or sham WBH for IL6 and each of the 17 differentially expressed genes. This analysis would not differentiate between WBH and sham WBH groups.
+
+# Please plot each Pearson correlation as a line and scatter plot (regression) and include in each graph the r value and p value. If possible, use blue for Sham WBH data and red for WBH data. For the final analysis in the paper, we would see if IL6 or other DEGs correlate with HDRS score or IDS-SR score when considering the depressive scores throughout the entire trial. We will only do that if we see a signal using depression change scores from baseline to 1 week or 2 weeks. 
+
+
+# Calculate changes in scores
+metadata <- meta %>% select(sample, ID, trmt, IDS_B, IDS_T1, IDS_T2, IDS_T3, IDS_T4, HAMD_B, HAMD_T1, HAMD_T2, CoreMax)
+metadata$deltaIDSwk1 <- metadata$IDS_B - metadata$IDS_T1
+metadata$deltaIDSwk2 <- metadata$IDS_B - metadata$IDS_T2
+metadata$deltaHAMwk1 <- metadata$HAMD_B - metadata$HAMD_T1
+metadata$deltaHAMwk2 <- metadata$HAMD_B - metadata$HAMD_T2
+
+```
+
+
+```{r}
+# Generating correlation graphs for change in IDS scores after 1 week
+
+outdir <- "C:\\GitHub\\Lowry-WBH\\deseq_out\\exploratory\\IDS1\\"
+
+custom_colors <- c("SHAM" = "blue",
+                   "WBH" = "red")
+
+for (gene in siggenes) {
+  # Extract gene expression
+  gene_expr <- as.numeric(counts_sig[gene, ])
+  
+  # Create plot data
+  plot_df <- data.frame(
+    DeltaScore = metadata$deltaIDSwk1,
+    Expression = gene_expr,
+    TreatmentGroup = metadata$trmt
+  )
+  
+  # Correlation test
+  cor_test <- cor.test(plot_df$Expression, plot_df$DeltaScore, method = "pearson")
+  r_val <- round(cor_test$estimate, 3)
+  p_val <- signif(cor_test$p.value, 3)
+  
+  # Create annotation text
+  annotation_text <- paste0("r = ", r_val, "\np = ", p_val)
+  
+  # Get coordinates for annotation (based on data range)
+  x_pos <- max(plot_df$DeltaScore, na.rm = TRUE)
+  y_pos <- max(plot_df$Expression, na.rm = TRUE)
+  
+  # Create plot
+  p <- ggplot(plot_df, aes(x = DeltaScore, y = Expression, color = TreatmentGroup)) +
+    geom_point(size = 3) +
+    geom_smooth(method = "lm", color = "darkred", se = TRUE) +
+    annotate("text", x = x_pos, y = y_pos,
+             label = annotation_text, hjust = 1, vjust = 1,
+             size = 4, fontface = "italic", color = "black") +
+    labs(
+      title = paste("Correlation of", gene, "with Δ IDS Score 1 Week Post WBH"),
+      x = "Δ Depression Score (Pre - Post)",
+      y = "Post-treatment Expression",
+      color = "treatment"
+    ) +
+    scale_color_manual(values = custom_colors) +
+    theme_minimal()
+  
+  # Clean up file name
+  safe_gene_name <- gsub("[^A-Za-z0-9_]", "_", gene)
+  
+  # Save as PNG
+  ggsave(
+    filename = file.path(outdir, paste0("plot_", safe_gene_name, ".png")),
+    plot = p,
+    width = 6,
+    height = 5,
+    dpi = 300
+  )
+}
+
+p_ids1 <- data.frame(
+  gene = rownames(counts_sig),
+  correlation = NA,
+  p_value = NA
+)
+
+for (i in 1:nrow(counts_sig)) {
+  expression <- as.numeric(counts_sig[i, ])
+  cor_test <- cor.test(expression, metadata$deltaIDSwk1, method = "pearson")
+  p_ids1$correlation[i] <- round(cor_test$estimate, 3)
+  p_ids1$p_value[i] <- signif(cor_test$p.value, 3)
+}
+
+write.csv(p_ids1, file = paste0(outdir, "IDS1WeekPostResults.csv"))
+
+```
+
+
+```{r}
+# Generating correlation graphs for change in IDS scores after 2 weeks
+
+outdir <- "C:\\GitHub\\Lowry-WBH\\deseq_out\\exploratory\\IDS2\\"
+
+custom_colors <- c("SHAM" = "blue",
+                   "WBH" = "red")
+
+for (gene in siggenes) {
+  # Extract gene expression
+  gene_expr <- as.numeric(counts_sig[gene, ])
+  
+  # Create plot data
+  plot_df <- data.frame(
+    DeltaScore = metadata$deltaIDSwk2,
+    Expression = gene_expr,
+    TreatmentGroup = metadata$trmt
+  )
+  
+  # Correlation test
+  cor_test <- cor.test(plot_df$Expression, plot_df$DeltaScore, method = "pearson")
+  r_val <- round(cor_test$estimate, 3)
+  p_val <- signif(cor_test$p.value, 3)
+  
+  # Create annotation text
+  annotation_text <- paste0("r = ", r_val, "\np = ", p_val)
+  
+  # Get coordinates for annotation (based on data range)
+  x_pos <- max(plot_df$DeltaScore, na.rm = TRUE)
+  y_pos <- max(plot_df$Expression, na.rm = TRUE)
+  
+  # Create plot
+  p <- ggplot(plot_df, aes(x = DeltaScore, y = Expression, color = TreatmentGroup)) +
+    geom_point(size = 3) +
+    geom_smooth(method = "lm", color = "darkred", se = TRUE) +
+    annotate("text", x = x_pos, y = y_pos,
+             label = annotation_text, hjust = 1, vjust = 1,
+             size = 4, fontface = "italic", color = "black") +
+    labs(
+      title = paste("Correlation of", gene, "with Δ IDS Score 2 Weeks Post WBH"),
+      x = "Δ Depression Score (Pre - Post)",
+      y = "Post-treatment Expression",
+      color = "Treatment"
+    ) +
+    scale_color_manual(values = custom_colors) +
+    theme_minimal()
+  
+  # Clean up file name
+  safe_gene_name <- gsub("[^A-Za-z0-9_]", "_", gene)
+  
+  # Save as PNG
+  ggsave(
+    filename = file.path(outdir, paste0("plot_", safe_gene_name, ".png")),
+    plot = p,
+    width = 6,
+    height = 5,
+    dpi = 300
+  )
+}
+
+p_ids2 <- data.frame(
+  gene = rownames(counts_sig),
+  correlation = NA,
+  p_value = NA
+)
+
+for (i in 1:nrow(counts_sig)) {
+  expression <- as.numeric(counts_sig[i, ])
+  cor_test <- cor.test(expression, metadata$deltaIDSwk2, method = "pearson")
+  p_ids2$correlation[i] <- round(cor_test$estimate, 3)
+  p_ids2$p_value[i] <- signif(cor_test$p.value, 3)
+}
+
+write.csv(p_ids2, file = paste0(outdir, "IDS2WeekPostResults.csv"))
+
+```
+
+
+```{r}
+# Generating correlation graphs for max core temps
+
+outdir <- "C:\\GitHub\\Lowry-WBH\\deseq_out\\exploratory\\Core\\"
+
+custom_colors <- c("SHAM" = "blue",
+                   "WBH" = "red")
+
+for (gene in siggenes) {
+  # Extract gene expression
+  gene_expr <- as.numeric(counts_sig[gene, ])
+  
+  # Create plot data
+  plot_df <- data.frame(
+    DeltaScore = metadata$CoreMax,
+    Expression = gene_expr,
+    TreatmentGroup = metadata$trmt
+  )
+  
+  # Correlation test
+  cor_test <- cor.test(plot_df$Expression, plot_df$DeltaScore, method = "pearson")
+  r_val <- round(cor_test$estimate, 3)
+  p_val <- signif(cor_test$p.value, 3)
+  
+  # Create annotation text
+  annotation_text <- paste0("r = ", r_val, "\np = ", p_val)
+  
+  # Get coordinates for annotation (based on data range)
+  x_pos <- max(plot_df$DeltaScore, na.rm = TRUE)
+  y_pos <- max(plot_df$Expression, na.rm = TRUE)
+  
+  # Create plot
+  p <- ggplot(plot_df, aes(x = DeltaScore, y = Expression, color = TreatmentGroup)) +
+    geom_point(size = 3) +
+    geom_smooth(method = "lm", color = "darkred", se = TRUE) +
+    annotate("text", x = x_pos, y = y_pos,
+             label = annotation_text, hjust = 1, vjust = 1,
+             size = 4, fontface = "italic", color = "black") +
+    labs(
+      title = paste("Correlation of", gene, "with Max Core Body Temperature"),
+      x = "Max Core Body Temperature (°C)",
+      y = "Post-treatment Expression",
+      color = "Treatment"
+    ) +
+    scale_color_manual(values = custom_colors) +
+    theme_minimal()
+  
+  # Clean up file name
+  safe_gene_name <- gsub("[^A-Za-z0-9_]", "_", gene)
+  
+  # Save as PNG
+  ggsave(
+    filename = file.path(outdir, paste0("plot_", safe_gene_name, ".png")),
+    plot = p,
+    width = 6,
+    height = 5,
+    dpi = 300
+  )
+}
+
+Core <- data.frame(
+  gene = rownames(counts_sig),
+  correlation = NA,
+  p_value = NA
+)
+
+for (i in 1:nrow(counts_sig)) {
+  expression <- as.numeric(counts_sig[i, ])
+  cor_test <- cor.test(expression, metadata$CoreMax, method = "pearson")
+  Core$correlation[i] <- round(cor_test$estimate, 3)
+  Core$p_value[i] <- signif(cor_test$p.value, 3)
+}
+
+write.csv(Core, file = paste(outdir, "MaxCoreTemp.csv"))
+
+```
+
+
+
+```{r}
+outdir <- "C:\\GitHub\\Lowry-WBH\\deseq_out\\exploratory\\HAMD1\\"
+
+custom_colors <- c("SHAM" = "blue",
+                   "WBH" = "red")
+
+for (gene in siggenes) {
+  # Extract gene expression
+  gene_expr <- as.numeric(counts_sig[gene, ])
+  
+  # Create plot data
+  plot_df <- data.frame(
+    DeltaScore = metadata$deltaHAMwk1,
+    Expression = gene_expr,
+    TreatmentGroup = metadata$trmt
+  )
+  
+  # Correlation test
+  cor_test <- cor.test(plot_df$Expression, plot_df$DeltaScore, method = "pearson")
+  r_val <- round(cor_test$estimate, 3)
+  p_val <- signif(cor_test$p.value, 3)
+  
+  # Create annotation text
+  annotation_text <- paste0("r = ", r_val, "\np = ", p_val)
+  
+  # Get coordinates for annotation (based on data range)
+  x_pos <- max(plot_df$DeltaScore, na.rm = TRUE)
+  y_pos <- max(plot_df$Expression, na.rm = TRUE)
+  
+  # Create plot
+  p <- ggplot(plot_df, aes(x = DeltaScore, y = Expression, color = TreatmentGroup)) +
+    geom_point(size = 3) +
+    geom_smooth(method = "lm", color = "darkred", se = TRUE) +
+    annotate("text", x = x_pos, y = y_pos,
+             label = annotation_text, hjust = 1, vjust = 1,
+             size = 4, fontface = "italic", color = "black") +
+    labs(
+      title = paste("Correlation of", gene, "with Δ HAMD Score 1 Week Post WBH"),
+      x = "Δ Depression Score (Pre - Post)",
+      y = "Post-treatment Expression",
+      color = "treatment"
+    ) +
+    scale_color_manual(values = custom_colors) +
+    theme_minimal()
+  
+  # Clean up file name
+  safe_gene_name <- gsub("[^A-Za-z0-9_]", "_", gene)
+  
+  # Save as PNG
+  ggsave(
+    filename = file.path(outdir, paste0("plot_", safe_gene_name, ".png")),
+    plot = p,
+    width = 6,
+    height = 5,
+    dpi = 300
+  )
+}
+
+p_ham1 <- data.frame(
+  gene = rownames(counts_sig),
+  correlation = NA,
+  p_value = NA
+)
+
+for (i in 1:nrow(counts_sig)) {
+  expression <- as.numeric(counts_sig[i, ])
+  cor_test <- cor.test(expression, metadata$deltaHAMwk1, method = "pearson")
+  p_ham1$correlation[i] <- round(cor_test$estimate, 3)
+  p_ham1$p_value[i] <- signif(cor_test$p.value, 3)
+}
+
+write.csv(p_ham1, file = paste0(outdir, "HAMD1WeekPostResults.csv"))
+
+```
+
+
+
+```{r}
+outdir <- "C:\\GitHub\\Lowry-WBH\\deseq_out\\exploratory\\HAMD2\\"
+
+custom_colors <- c("SHAM" = "blue",
+                   "WBH" = "red")
+
+for (gene in siggenes) {
+  # Extract gene expression
+  gene_expr <- as.numeric(counts_sig[gene, ])
+  
+  # Create plot data
+  plot_df <- data.frame(
+    DeltaScore = metadata$deltaHAMwk2,
+    Expression = gene_expr,
+    TreatmentGroup = metadata$trmt
+  )
+  
+  # Correlation test
+  cor_test <- cor.test(plot_df$Expression, plot_df$DeltaScore, method = "pearson")
+  r_val <- round(cor_test$estimate, 3)
+  p_val <- signif(cor_test$p.value, 3)
+  
+  # Create annotation text
+  annotation_text <- paste0("r = ", r_val, "\np = ", p_val)
+  
+  # Get coordinates for annotation (based on data range)
+  x_pos <- max(plot_df$DeltaScore, na.rm = TRUE)
+  y_pos <- max(plot_df$Expression, na.rm = TRUE)
+  
+  # Create plot
+  p <- ggplot(plot_df, aes(x = DeltaScore, y = Expression, color = TreatmentGroup)) +
+    geom_point(size = 3) +
+    geom_smooth(method = "lm", color = "darkred", se = TRUE) +
+    annotate("text", x = x_pos, y = y_pos,
+             label = annotation_text, hjust = 1, vjust = 1,
+             size = 4, fontface = "italic", color = "black") +
+    labs(
+      title = paste("Correlation of", gene, "with Δ HAMD Score 2 Weeks Post WBH"),
+      x = "Δ Depression Score (Pre - Post)",
+      y = "Post-treatment Expression",
+      color = "treatment"
+    ) +
+    scale_color_manual(values = custom_colors) +
+    theme_minimal()
+  
+  # Clean up file name
+  safe_gene_name <- gsub("[^A-Za-z0-9_]", "_", gene)
+  
+  # Save as PNG
+  ggsave(
+    filename = file.path(outdir, paste0("plot_", safe_gene_name, ".png")),
+    plot = p,
+    width = 6,
+    height = 5,
+    dpi = 300
+  )
+}
+
+p_ham2 <- data.frame(
+  gene = rownames(counts_sig),
+  correlation = NA,
+  p_value = NA
+)
+
+for (i in 1:nrow(counts_sig)) {
+  expression <- as.numeric(counts_sig[i, ])
+  cor_test <- cor.test(expression, metadata$deltaHAMwk1, method = "pearson")
+  p_ham2$correlation[i] <- round(cor_test$estimate, 3)
+  p_ham2$p_value[i] <- signif(cor_test$p.value, 3)
+}
+
+write.csv(p_ham2, file = paste0(outdir, "HAMD2WeekPostResults.csv"))
+
+```
