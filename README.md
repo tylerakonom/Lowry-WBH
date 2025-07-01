@@ -30,3 +30,6 @@ Pre-processing scripts were completed using shell commands located [here](https:
 #### Differential Expression
 
 Differential expression was analyzed using [wbh_deseq2.Rmd](https://github.com/tylerakonom/Lowry-WBH/blob/main/r_scripts/wbh_deseq2.Rmd) with a threshold set at a false-discovery rate-adjusted *p*-value < 0.01.
+
+
+[![DOI](https://zenodo.org/badge/605754900.svg)](https://doi.org/10.5281/zenodo.15786822)
