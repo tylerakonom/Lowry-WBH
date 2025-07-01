@@ -12,7 +12,7 @@ Depression is the leading cause of global disability according to the World Heal
 
 ## Background
 
-We set out to identify changes in gene expression and biological processes in participants with major depressive disorder immediately post intervention by whole-body hyperthermia versus sham whole-body hyperthermia as a follow-up to (Janssen et al.)[doi:10.1001/jamapsychiatry.2016.1031].
+We set out to identify changes in gene expression and biological processes in participants with major depressive disorder immediately post intervention by whole-body hyperthermia versus sham whole-body hyperthermia as a follow-up to (Janssen et al.)[https://jamanetwork.com/journals/jamapsychiatry/fullarticle/2521478].
  
 ## Data Processing
 
