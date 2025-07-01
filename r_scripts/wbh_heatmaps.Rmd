@@ -28,7 +28,7 @@ library(EnhancedVolcano)
 
 
 
-# --------- TO EDIT Generating heatmaps of significant GSEA results --------
+# --------- Generating heatmaps of significant GSEA results --------
 
 ```{r}
 setwd("C:\\GitHub\\Lowry-WBH\\deseq_out\\")
@@ -36,11 +36,14 @@ setwd("C:\\GitHub\\Lowry-WBH\\deseq_out\\")
 pos <- read.csv("gsea_pos.csv", header = TRUE)
 neg <- read.csv("gsea_neg.csv", header = TRUE)
 norm <- read.csv("C:\\GitHub\\Lowry-WBH\\deseq_out\\norm_counts.csv", row.names = 1)
+
+# Selecting each variable in sample ids. M (male), F (female), S (sham), T (treatment)
 norm_m <- select(norm, contains("M"))
 norm_f <- select(norm, contains("F"))
 norm_s <- select(norm, contains("S"))
 norm_t <- select(norm, contains("T"))
 
+# Generated in "wbh_deseq2.rmd"
 zscore <- read.csv("C:\\GitHub\\Lowry-WBH\\deseq_out\\zscore.csv", row.names = 1)
 
 posfwer <- filter(pos, FWER.p.val < 0.05)

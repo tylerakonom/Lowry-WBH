@@ -1,7 +1,7 @@
 ---
 title: "wbh_deseq2"
 author: "Tyler Akonom"
-date: "1/8/2025"
+date: "7/1/2025"
 output: html_document
 ---
 
@@ -30,6 +30,7 @@ library(EnhancedVolcano)
 # Load counts and metadata
 ```{r}
 # Importing count and coldata files
+
 counts = read.csv("C:\\GitHub\\Lowry-WBH\\rsub_out\\rsub_id.coverage.csv", header=TRUE, row.names = 1)
 colnames(counts) <- sub(".bam", "", colnames(counts))
 coldata = read.table("C:\\GitHub\\Lowry-WBH\\rsub_out\\coldata.txt", header=TRUE, sep="\t")
@@ -44,6 +45,7 @@ coldata$sequencing_run <- factor(coldata$sequencing_run)
 # sort coldata properly
 counts <- counts[,coldata$sample_name]
 
+# Adding threshold value in setup chunk from DEG analysis
 threshold <- 0.1
 ```
 
@@ -73,13 +75,14 @@ res <- results(dds)
 ntdds <- normTransform(dds)
 plotPCA(ntdds, intgroup = "sex")
 plotPCA(ntdds, intgroup = "sequencing_run")
-# PCA identified sex as a variable that will need to be controlled for in DESeq design
+# PCA identified biological sex (But not sequencing run) as a variable that will need to be controlled for in DESeq design
 ```
 
 
 # Running DEG analysis controlling for necessary variables
 ```{r}
-# Using sfType because of general down regulation in response to heating.
+# Using sfType "iterate" because of general down regulation in response to heating.
+# Controlling for biological sex as a result of PCA above
 dds = DESeqDataSetFromMatrix(countData = counts_edited, colData = coldata_edited, design = ~ sex + exp_group)
 dds = DESeq(dds, sfType = "iterate")
 plotDispEsts(dds)
@@ -115,6 +118,29 @@ hist(res_treatment$padj, breaks = 200)
 # dev.off()
 ```
 
+
+
+```{r}
+# Generating for creating of complex heatmaps of DEGs
+setwd("C:\\GitHub\\Lowry-WBH\\deseq_out\\")
+
+normed = counts(dds, normalized=TRUE)
+siggenes <- rownames(res_treatment)
+normedsig <- as.data.frame(normed) %>% filter(rownames(normed) %in% siggenes)
+
+rowSigma <- apply(normedsig, 1, sd, na.rm = TRUE)
+rowMu <- rowMeans(normedsig, na.rm = TRUE)
+zscore_norm_expression <- (normedsig - rowMu) / rowSigma
+write.csv(zscore_norm_expression, file="zscore.csv")
+
+col_fun = circlize::colorRamp2(c(-2, 0, 2), c("blue", "white", "red"))
+resSig <- as.data.frame(subset(res_treatment, padj < threshold))
+resSigRows <- rownames(resSig)
+zscore_sig <- as.data.frame(zscore_norm_expression) %>% filter(rownames(zscore_norm_expression) %in% resSigRows)
+    
+```
+
+
 # Generating Volcano plot
 ```{r}
 # Generating enhanced volcano plot of differentially expressed genes
@@ -134,79 +160,6 @@ EnhancedVolcano(res_treatment,
     max.overlaps = 100)
 dev.off()
 ```
-
-```{r}
-# Generating complex heatmap of differentially expressed genes
-setwd("C:\\GitHub\\Lowry-WBH\\deseq_out\\")
-
-normed = counts(dds, normalized=TRUE)
-siggenes <- rownames(res_treatment)
-normedsig <- as.data.frame(normed) %>% filter(rownames(normed) %in% siggenes)
-
-rowSigma <- apply(normedsig, 1, sd, na.rm = TRUE)
-rowMu <- rowMeans(normedsig, na.rm = TRUE)
-zscore_norm_expression <- (normedsig - rowMu) / rowSigma
-write.csv(zscore_norm_expression, file="zscore.csv")
-
-col_fun = circlize::colorRamp2(c(-2, 0, 2), c("blue", "white", "red"))
-resSig <- as.data.frame(subset(res_treatment, padj < threshold))
-resSigRows <- rownames(resSig)
-zscore_sig <- as.data.frame(zscore_norm_expression) %>% filter(rownames(zscore_norm_expression) %in% resSigRows)
-
-# Use this one for factor variables
-ha = HeatmapAnnotation(gender_cohort = coldata_edited$group,
-    col = list(gender_cohort = c("female_sham" = "red", "female_treatment" = "green", "male_sham" = "blue", "male_treatment" = "yellow")))
-
-# Use this one when it's not a factor variable
-ha = HeatmapAnnotation(gender_cohort = coldata_edited$group)
-
-ht <- Heatmap(name = "WBH Effect", as.matrix(zscore_sig),
-        cluster_columns = TRUE,
-        col = col_fun,
-        row_names_gp = gpar(fontsize = 8),
-        row_title_rot = 90,
-        column_title_side = "bottom",
-        column_names_rot = 45,
-        top_annotation = ha,
-#        show_row_dend = FALSE,
-#        show_column_dend = FALSE,
-  )
-ht
-
-dnFGFR_coldata <- coldataedit %>% filter(!genotype == "ctrl")
-zscore_dnFGFR <- zscore_sig %>% select(dnFGFR_coldata$sampleName)
-
-ht_dnFGFR <- Heatmap(name = "dnFGFR", zscore_dnFGFR, cluster_columns = FALSE, col = col_fun,
-        row_names_gp = gpar(fontsize = 8),
-        row_title_rot = 90,
-        column_title_side = "bottom",
-        column_names_rot = 45,
-        show_column_names = FALSE,
-        heatmap_height = unit(10, "in"),
-        heatmap_width = unit(5, "in"),
-#        show_row_dend = FALSE,
-#        show_column_dend = FALSE,
-  )
-ht_dnFGFR
-
-ctrl_coldata <- coldataedit %>% filter(!genotype == "dnFGFR")
-zscore_ctrl <- zscore_sig %>% select(ctrl_coldata$sampleName)
-
-ht_ctrl <- Heatmap(name = "Control", zscore_ctrl, cluster_columns = FALSE, col = col_fun,
-        row_names_gp = gpar(fontsize = 8),
-        row_title_rot = 90,
-        column_title_side = "bottom",
-        column_names_rot = 45,
-        # show_column_names = FALSE,
-        heatmap_height = unit(10, "in"),
-        heatmap_width = unit(5, "in"),
-#        show_row_dend = FALSE,
-#        show_column_dend = FALSE,
-  )
-ht_ctrl
-```
-
-
 
 
 # Generating ranked list for GSEA
