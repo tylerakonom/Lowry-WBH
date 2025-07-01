@@ -12,7 +12,7 @@ Depression is the leading cause of global disability according to the World Heal
 
 ## Background
 
-We set out to identify changes in gene expression and biological processes in participants with major depressive disorder immediately post intervention by whole-body hyperthermia versus sham whole-body hyperthermia as a follow-up to (Janssen et al.)[https://jamanetwork.com/journals/jamapsychiatry/fullarticle/2521478].
+We set out to identify changes in gene expression and biological processes in participants with major depressive disorder immediately post intervention by whole-body hyperthermia versus sham whole-body hyperthermia as a follow-up to []Janssen et al.](https://jamanetwork.com/journals/jamapsychiatry/fullarticle/2521478).
  
 ## Data Processing
 
@@ -25,8 +25,8 @@ All files were uploaded to the Alpine module as part of the research computing p
 
 #### Pre-processing
 
-Pre-processing scripts were completed using shell commands located (here)[https://github.com/tylerakonom/Lowry-WBH/tree/main/shell_scripts]. Raw reads were trimmed with [trimReads.sh](https://github.com/tylerakonom/Lowry-WBH/blob/main/shell_scripts/trimReads.sh), aligned with (alignReads.sh)[https://github.com/tylerakonom/Lowry-WBH/blob/main/shell_scripts/alignReads.sh], and annotated / counted in R with (rsubread.Rmd)[https://github.com/tylerakonom/Lowry-WBH/blob/main/r_scripts/rsubread.Rmd].
+Pre-processing scripts were completed using shell commands located [here](https://github.com/tylerakonom/Lowry-WBH/tree/main/shell_scripts). Raw reads were trimmed with [trimReads.sh](https://github.com/tylerakonom/Lowry-WBH/blob/main/shell_scripts/trimReads.sh), aligned with [alignReads.sh](https://github.com/tylerakonom/Lowry-WBH/blob/main/shell_scripts/alignReads.sh), and annotated / counted in R with [rsubread.Rmd](https://github.com/tylerakonom/Lowry-WBH/blob/main/r_scripts/rsubread.Rmd).
 
 #### Differential Expression
 
-Differential expression was analyzed using (wbh_deseq2.Rmd)[https://github.com/tylerakonom/Lowry-WBH/blob/main/r_scripts/wbh_deseq2.Rmd] with a threshold set at a false-discovery rate-adjusted *p*-value < 0.01.
+Differential expression was analyzed using [wbh_deseq2.Rmd](https://github.com/tylerakonom/Lowry-WBH/blob/main/r_scripts/wbh_deseq2.Rmd) with a threshold set at a false-discovery rate-adjusted *p*-value < 0.01.
