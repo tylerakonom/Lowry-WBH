@@ -2,7 +2,7 @@
 
 Tyler N. Akonom, Mary A. Allen, Tommy K. Begay, Charles L. Raison, Christopher A. Lowry
 
-For submission in []Brain, Behavior, and Immunity](https://www.sciencedirect.com/journal/brain-behavior-and-immunity). July 2025.
+For submission in [Brain, Behavior, and Immunity](https://www.sciencedirect.com/journal/brain-behavior-and-immunity). July 2025.
 
 
 ## Abstract
